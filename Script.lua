@@ -56,12 +56,12 @@ end
 
 local mainFrame = Instance.new("Frame")
 mainFrame.Name = "MainFrame"
-mainFrame.Size = UDim2.new(0, 240, 0, 420) -- Un poco más alto para los botones móviles
-mainFrame.Position = UDim2.new(0.05, 0, 0.2, 0) -- Posición inicial amigable para móvil
+mainFrame.Size = UDim2.new(0, 240, 0, 450) -- Más alto para el nuevo botón
+mainFrame.Position = UDim2.new(0.05, 0, 0.2, 0) 
 mainFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
 mainFrame.BorderSizePixel = 0
 mainFrame.Active = true
-mainFrame.Draggable = true -- ¡IMPORTANTE! Permite moverlo con el dedo en Delta
+mainFrame.Draggable = true -- Movible con el dedo
 mainFrame.Parent = screenGui
 
 Instance.new("UICorner", mainFrame).CornerRadius = UDim.new(0, 8)
@@ -98,7 +98,7 @@ Instance.new("UICorner", btnSave)
 
 -- Lista Archivos
 local scrollList = Instance.new("ScrollingFrame")
-scrollList.Size = UDim2.new(0.9, 0, 0.4, 0)
+scrollList.Size = UDim2.new(0.9, 0, 0.35, 0) -- Un poco más pequeño para dar espacio
 scrollList.Position = UDim2.new(0.05, 0, 0.18, 0)
 scrollList.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
 scrollList.BorderSizePixel = 0
@@ -107,11 +107,11 @@ local layout = Instance.new("UIListLayout")
 layout.Padding = UDim.new(0, 5)
 layout.Parent = scrollList
 
--- SECCIÓN DE ACCIONES (NUEVO PARA MÓVIL)
+-- SECCIÓN DE ACCIONES (BOTONES MÓVILES)
 local actionsFrame = Instance.new("Frame")
 actionsFrame.Name = "ActionsFrame"
-actionsFrame.Size = UDim2.new(0.9, 0, 0.25, 0)
-actionsFrame.Position = UDim2.new(0.05, 0, 0.60, 0)
+actionsFrame.Size = UDim2.new(0.9, 0, 0.35, 0) -- Más grande para incluir el nuevo botón
+actionsFrame.Position = UDim2.new(0.05, 0, 0.55, 0)
 actionsFrame.BackgroundTransparency = 1
 actionsFrame.Parent = mainFrame
 
@@ -128,12 +128,12 @@ local function crearBotonAccion(texto, color, orden, callback)
     btn.MouseButton1Click:Connect(callback)
 end
 
--- Botón Limpiar (Separado abajo)
+-- Botón Limpiar Visual (Separado abajo del todo)
 local btnLimpiar = Instance.new("TextButton")
-btnLimpiar.Text = "🧹 LIMPIAR VISUAL (X)"
+btnLimpiar.Text = "🧹 QUITAR FANTASMAS (X)"
 btnLimpiar.Size = UDim2.new(0.9, 0, 0, 30)
 btnLimpiar.Position = UDim2.new(0.05, 0, 0.9, 0)
-btnLimpiar.BackgroundColor3 = Color3.fromRGB(200, 60, 60)
+btnLimpiar.BackgroundColor3 = Color3.fromRGB(200, 100, 50) -- Naranja oscuro
 btnLimpiar.TextColor3 = Color3.new(1,1,1)
 btnLimpiar.Font = Enum.Font.GothamBold
 btnLimpiar.Parent = mainFrame
@@ -253,9 +253,6 @@ end
 -- LOGICA DE PEGADO
 function colocarBloqueReal(nombreItem, cframePosicion)
     -- ⚠️⚠️⚠️ AQUI VA TU REMOTE EVENT ⚠️⚠️⚠️
-    -- En móvil o PC, esto es lo que realmente construye.
-    -- Ejemplo:
-    -- game:GetService("ReplicatedStorage").Remotes.Place:FireServer(unpack({[1]="Place", [2]=nombreItem, [3]=cframePosicion}))
     print("🔨 [CONSTRUIR]: " .. nombreItem)
 end
 
@@ -299,7 +296,13 @@ function limpiarFantasmas()
     fantasmasCreados = {}
     bloqueSeleccionado = nil
     highlightBox.Adornee = nil
-    notificar("🗑️ Limpio")
+    notificar("🗑️ Fantasmas limpiados")
+end
+
+-- NUEVA FUNCIÓN: VACIAR PORTAPAPELES
+function vaciarPortapapeles()
+    datosGuardados = {}
+    notificar("♻️ Memoria vaciada (0 objetos)")
 end
 
 -- ==========================================
@@ -309,6 +312,9 @@ end
 -- 1. Crear botones para Delta (Móvil)
 crearBotonAccion("🎯 COPIAR (K)", Color3.fromRGB(0, 150, 100), 1, copiarEstructura)
 crearBotonAccion("🏗️ PEGAR (V)", Color3.fromRGB(0, 100, 200), 2, pegarEstructura)
+-- NUEVO BOTÓN PARA VACIAR MEMORIA:
+crearBotonAccion("♻️ VACIAR MEMORIA (Z)", Color3.fromRGB(150, 0, 0), 3, vaciarPortapapeles)
+
 btnLimpiar.MouseButton1Click:Connect(limpiarFantasmas)
 
 -- 2. Lógica de Herramienta
@@ -329,7 +335,8 @@ tool.Equipped:Connect(function(mouse)
         key = key:lower()
         if key == "k" then copiarEstructura()
         elseif key == "v" then pegarEstructura()
-        elseif key == "x" then limpiarFantasmas()
+        elseif key == "x" then limpiarFantasmas() -- Limpia solo lo visual
+        elseif key == "z" then vaciarPortapapeles() -- Limpia la memoria (Lo que pediste)
         end
     end)
 end)
@@ -340,4 +347,4 @@ tool.Unequipped:Connect(function()
 end)
 
 actualizarListaArchivos()
-notificar("✅ Script Cargado (PC/Delta)")
+notificar("✅ Script Actualizado (Con Limpiador)")
