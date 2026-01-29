@@ -42,16 +42,15 @@ if CoreGui:FindFirstChild("ClonadorProGUI") then CoreGui.ClonadorProGUI:Destroy(
 
 local screenGui = Instance.new("ScreenGui")
 screenGui.Name = "ClonadorProGUI"
--- Protección básica
 if syn and syn.protect_gui then syn.protect_gui(screenGui) 
 elseif gethui then screenGui.Parent = gethui()
 else screenGui.Parent = CoreGui end
 
--- 1. BOTÓN FLOTANTE (PARA MINIMIZAR/ABRIR)
+-- 1. BOTÓN FLOTANTE (MINIMIZAR/ABRIR)
 local toggleBtn = Instance.new("TextButton")
 toggleBtn.Name = "ToggleMenu"
 toggleBtn.Size = UDim2.new(0, 45, 0, 45)
-toggleBtn.Position = UDim2.new(0.02, 0, 0.4, 0) -- A la izquierda
+toggleBtn.Position = UDim2.new(0.02, 0, 0.4, 0) 
 toggleBtn.BackgroundColor3 = Color3.fromRGB(0, 120, 200)
 toggleBtn.Text = "📐"
 toggleBtn.TextSize = 25
@@ -63,7 +62,7 @@ Instance.new("UICorner", toggleBtn).CornerRadius = UDim.new(0, 10)
 -- 2. PANEL PRINCIPAL
 local mainFrame = Instance.new("Frame")
 mainFrame.Name = "MainFrame"
-mainFrame.Size = UDim2.new(0, 230, 0, 380) -- Tamaño compacto
+mainFrame.Size = UDim2.new(0, 230, 0, 380) 
 mainFrame.Position = UDim2.new(0.15, 0, 0.25, 0) 
 mainFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
 mainFrame.BorderSizePixel = 0
@@ -72,7 +71,7 @@ mainFrame.Parent = screenGui
 
 Instance.new("UICorner", mainFrame).CornerRadius = UDim.new(0, 10)
 
--- BARRA DE TÍTULO (Para mover la ventana)
+-- BARRA DE TÍTULO (MOVER)
 local topBar = Instance.new("Frame")
 topBar.Size = UDim2.new(1, 0, 0, 35)
 topBar.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
@@ -91,7 +90,6 @@ title.TextSize = 14
 title.TextXAlignment = Enum.TextXAlignment.Left
 title.Parent = topBar
 
--- Botón cerrar (X) dentro del menú
 local closeMini = Instance.new("TextButton")
 closeMini.Text = "-"
 closeMini.Size = UDim2.new(0.15, 0, 1, 0)
@@ -133,22 +131,21 @@ local layoutFiles = Instance.new("UIListLayout")
 layoutFiles.Padding = UDim.new(0, 4)
 layoutFiles.Parent = scrollList
 
--- CONTENEDOR DE BOTONES (EL IMPORTANTE)
+-- CONTENEDOR ACCIONES
 local actionsFrame = Instance.new("Frame")
 actionsFrame.Name = "ActionsFrame"
-actionsFrame.Size = UDim2.new(0.9, 0, 0.48, 0) -- Ocupa el resto del espacio
+actionsFrame.Size = UDim2.new(0.9, 0, 0.48, 0) 
 actionsFrame.Position = UDim2.new(0.05, 0, 0.50, 0) 
 actionsFrame.BackgroundTransparency = 1
 actionsFrame.Parent = mainFrame
 
--- Layout Automático para que no haya huecos
 local layoutActions = Instance.new("UIListLayout")
-layoutActions.Padding = UDim.new(0, 6) -- 6px de separación entre botones
+layoutActions.Padding = UDim.new(0, 6)
 layoutActions.SortOrder = Enum.SortOrder.LayoutOrder
 layoutActions.Parent = actionsFrame
 
 -- ==========================================
--- 🤏 FUNCIÓN PARA ARRASTRAR (MOBILE FRIENDLY)
+-- 🤏 FUNCIÓN ARRASTRAR
 -- ==========================================
 local function hacerArrastrable(frameDrag, frameMover)
     local dragging, dragInput, dragStart, startPos
@@ -157,10 +154,7 @@ local function hacerArrastrable(frameDrag, frameMover)
             dragging = true
             dragStart = input.Position
             startPos = frameMover.Position
-            
-            input.Changed:Connect(function()
-                if input.UserInputState == Enum.UserInputState.End then dragging = false end
-            end)
+            input.Changed:Connect(function() if input.UserInputState == Enum.UserInputState.End then dragging = false end end)
         end
     end)
     frameDrag.InputChanged:Connect(function(input)
@@ -173,9 +167,8 @@ local function hacerArrastrable(frameDrag, frameMover)
         end
     end)
 end
-hacerArrastrable(topBar, mainFrame) -- Solo se mueve agarrando la barra de arriba
+hacerArrastrable(topBar, mainFrame)
 
--- Lógica Minimizar
 local function toggleGUI()
     menuAbierto = not menuAbierto
     if menuAbierto then
@@ -190,7 +183,7 @@ toggleBtn.MouseButton1Click:Connect(toggleGUI)
 closeMini.MouseButton1Click:Connect(toggleGUI)
 
 -- ==========================================
--- 🧠 FUNCIONALIDAD
+-- 🧠 LÓGICA & FUNCIONES
 -- ==========================================
 
 function notificar(texto)
@@ -255,6 +248,21 @@ function esBloqueValido(part)
     return part:IsA("BasePart") and part.Name ~= "Baseplate" and part.Transparency < 1 and not part.Parent:FindFirstChild("Humanoid") and not part.Name:find("Ghost_")
 end
 
+-- ==========================================
+-- 🔄 LÓGICA DE ROTACIÓN INTELIGENTE
+-- ==========================================
+function obtenerRotacionJugador()
+    -- Intenta obtener la rotación del personaje
+    if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+        local hrp = LocalPlayer.Character.HumanoidRootPart
+        -- Obtenemos el ángulo Y (Yaw) y lo redondeamos a 90 grados
+        local x, y, z = hrp.CFrame:ToEulerAnglesYXZ()
+        local rotacionSnap = math.round(y / (math.pi/2)) * (math.pi/2)
+        return CFrame.Angles(0, rotacionSnap, 0)
+    end
+    return CFrame.new()
+end
+
 function copiarEstructura()
     if not bloqueSeleccionado then return notificar("⚠️ Selecciona un bloque") end
     local centroPart = bloqueSeleccionado
@@ -275,14 +283,20 @@ function copiarEstructura()
 end
 
 function colocarBloqueReal(nombreItem, cframePosicion)
-    -- AQUÍ VA TU LÓGICA DE EVENTO REMOTO (Si aplica)
+    -- AQUÍ VA TU EVENTO REMOTO
+    print("construir", nombreItem) 
 end
 
 function pegarEstructura()
     if not bloqueSeleccionado then return notificar("⚠️ Selecciona destino") end
     if #datosGuardados == 0 then return notificar("⚠️ Archivo vacío") end
-    local nuevoCentroCFrame = bloqueSeleccionado.CFrame
-    notificar("🏗️ Pegando...")
+    
+    -- AQUÍ ESTÁ EL CAMBIO CLAVE:
+    -- Usamos la posición del bloque seleccionado + la rotación de TU personaje
+    local rotacionDeseada = obtenerRotacionJugador()
+    local nuevoCentroCFrame = CFrame.new(bloqueSeleccionado.Position) * rotacionDeseada
+    
+    notificar("🏗️ Pegando (Sigue tu mirada)...")
     for _, data in pairs(datosGuardados) do
         local relCF = CFrame.new(unpack(data.CF))
         local cframeFinal = nuevoCentroCFrame * relCF
@@ -320,28 +334,26 @@ function vaciarMemoria()
 end
 
 -- ==========================================
--- 🎮 GENERADOR DE BOTONES (ESTO ARREGLA EL ESPACIO)
+-- 🎮 GENERADOR DE BOTONES
 -- ==========================================
 local function crearBoton(texto, color, orden, func)
     local btn = Instance.new("TextButton")
     btn.Text = texto
-    btn.Size = UDim2.new(1, 0, 0, 32) -- Altura fija
+    btn.Size = UDim2.new(1, 0, 0, 32)
     btn.BackgroundColor3 = color
     btn.TextColor3 = Color3.new(1,1,1)
     btn.Font = Enum.Font.GothamBold
     btn.LayoutOrder = orden
-    btn.Parent = actionsFrame -- TODOS van al mismo contenedor
+    btn.Parent = actionsFrame
     Instance.new("UICorner", btn)
     btn.MouseButton1Click:Connect(func)
 end
 
--- Ordenados verticalmente sin espacios raros:
 crearBoton("🎯 COPIAR (K)", Color3.fromRGB(0, 150, 100), 1, copiarEstructura)
 crearBoton("🏗️ PEGAR (V)", Color3.fromRGB(0, 100, 200), 2, pegarEstructura)
-crearBoton("🧹 LIMPIAR VISUAL (X)", Color3.fromRGB(200, 120, 0), 3, limpiarFantasmas) -- Naranja
-crearBoton("♻️ VACIAR MEMORIA (Z)", Color3.fromRGB(150, 0, 0), 4, vaciarMemoria) -- Rojo
+crearBoton("🧹 LIMPIAR VISUAL (X)", Color3.fromRGB(200, 120, 0), 3, limpiarFantasmas)
+crearBoton("♻️ VACIAR MEMORIA (Z)", Color3.fromRGB(150, 0, 0), 4, vaciarMemoria)
 
--- Lógica Herramienta
 tool.Equipped:Connect(function(mouse)
     actualizarListaArchivos()
     mouse.Button1Down:Connect(function()
@@ -363,4 +375,4 @@ end)
 
 tool.Unequipped:Connect(function() highlightBox.Adornee = nil bloqueSeleccionado = nil end)
 actualizarListaArchivos()
-notificar("✅ Script v3 Cargado")
+notificar("✅ Script v4.0 (Rotación Automática)")
